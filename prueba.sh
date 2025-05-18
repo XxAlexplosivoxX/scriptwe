@@ -35,7 +35,7 @@ reset='\e[0m'
 
 clear
 
-function detectarDistro() {
+detectarDistro() {
     if [[ -r /etc/os-release ]]; then
         source /etc/os-release
         echo "$ID"
@@ -44,7 +44,7 @@ function detectarDistro() {
     fi
 }
 
-function detectarNombreDistro() {
+detectarNombreDistro() {
     if [[ -r /etc/os-release ]]; then
         source /etc/os-release
         echo "$NAME"
@@ -53,7 +53,7 @@ function detectarNombreDistro() {
     fi
 }
 
-function instalarDependencias() {
+instalarDependencias() {
     local distro="$1"
     local arrDependencias=()
     local comandoInstalar=""
@@ -92,7 +92,7 @@ function instalarDependencias() {
     sleep 1
 }
 
-function convertirEnteroAIP() {
+convertirEnteroAIP() {
     local IPinteger="$1"
     # se colca un formato para colocar 4 valores en decimal CON SIGNO (el %d), "d" de decimal
     # $((  )) es para hacer una operacion aritmetica en bash, sin esto no funciona
@@ -132,7 +132,7 @@ function convertirEnteroAIP() {
     # entonces solo nos quedara: 1100000
 }
 
-function escanearIPs() {
+escanearIPs() {
     local IPaEscanear="$1"
     if hping3 -1 -c 1 -n -q "$IPaEscanear" &>/dev/null; then
         echo "UP $IPaEscanear"
@@ -142,7 +142,7 @@ function escanearIPs() {
 }
 export -f escanearIPs
 
-function verificarIP() {
+verificarIP() {
     local IP="$1"
     if nmap -sn "$IP" 2>/dev/null | grep -q "Host is up"; then
         return 0
@@ -151,7 +151,7 @@ function verificarIP() {
     fi
 }
 
-function cambiarIP() {
+cambiarIP() {
     local interfaz="$1"
     local IP="$2"
     local gateway="$3"
