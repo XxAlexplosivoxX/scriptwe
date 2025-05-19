@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+########################
+#                      #
+# por: XxAlexplosivoxX #
+#                      #
+########################
+
+instalarDependencias() {
+	# variable para el AUR helper
+	local AURhelper=$1
+
+	# dependencias para instalar con pacman
+	local depsPacman=("virtualbox" "virtualbox-guest-iso" "figlet" "lolcat" "toilet")
+	# dependencias a instalar con el AUR helper
+	local depsAUR=("linux-zen-headers" "virtualbox-ext-oracle")
+
+	# bucle para instalar dependencias instalables desde pacman
+	for paquete in "${depsPacman[@]}"; do
+		if ! pacman -Qi "$paquete" &> /dev/null; then
+			echo "instalando paquete ${paquete}..."
+			if sudo pacman -S "$paquete" --noconfirm &> /dev/null; then
+				echo "$paquete instalado correctamente"
+			else 
+				echo "ha fallao la instalacion de ${paquete}..."
+			fi
+		else 
+			echo "$paquete ya esta instalado"
+		fi
+	done
+
+	# bucle para las dependencias instalables desde el AUR helper
+	for paquete in "${depsAUR[@]}"; do
+		if ! pacman -Qi "$paquete" &> /dev/null; then
+			echo "instalando paquete ${paquete}..."
+			if "$AURhelper" -S "$paquete" --noconfirm &> /dev/null; then
+				echo "$paquete instalado correctamente"
+			else 
+				echo "ha fallao la instalacion de ${paquete}..."
+			fi
+		else 
+			echo "$paquete ya esta instalado"
+		fi
+	done
+}
+
+checkAURhelper() {
+	local posiblesAURhelpers=("yay" "paru" "pikaur")
+
+	for AURhelper in "${posiblesAURhelpers[@]}"; do
+		if command -v "$AURhelper" &> /dev/null; then
+			echo "$AURhelper"
+			break
+		fi
+	done
+}
+
+if [[ $EUID -eq 0 ]]; then
+	echo "no ejecutei el script como superusuario aweonao, la vai a cagar entera"
+	exit 1
+fi
+
+AURhelper=$(checkAURhelper)
+if [[ -z $AURhelper ]]; then
+	echo "no sirves ni pal pico, ni el AUR helper tenei instalado"
+	exit 1
+fi
+
+instalarDependencias "$AURhelper"
+
+
+
+echo "configurando usuarios..."
+if sudo gpasswd -a "$USER" vboxusers; then
+	echo "$USER añadido al grupo vboxusers"
+else
+	echo "cagadón al añadir al usuario $USER al grupo vboxusers po wn"
+	exit 1
+fi
+
+echo "verificando modulos de kernel..."
+if sudo modprobe vboxdrv; then
+	echo "el modulo vboxdrv funciona :D"
+else
+	echo "wea no sirve pa nada, no tenei el modulo vboxdrv"
+	exit 1
+fi
+
+sudo systemctl enable vboxweb.service
+
+while true; do
+	read -p "reiniciar ahora? [y/n]: " repueta
+
+	if [[ "$repueta" == "s" || "$repueta" == "S" ]]; then
+		echo "reiniciando en unos minutos"
+		sleep 5
+		reboot
+	elif [[ "$repueta" == "n" || "$repueta" == "N" ]]; then
+		echo "que no se te olvide reiniciar depue..."
+		break
+	else
+		echo "reponde \"s\" o \"n\" aweonwao"
+	fi
+done
