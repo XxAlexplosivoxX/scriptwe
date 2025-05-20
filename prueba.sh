@@ -169,28 +169,70 @@ cambiarIP() {
 
     case "$distro" in
         debian)
-            echo "" > /etc/interfaces
-            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo}"
-            echo "auto $interfaz
+            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Debian"
+
+            cat <<EOF > /etc/network/interfaces
+auto $interfaz
 iface $interfaz inet static
     address $IP
     netmask $netmask
+    gateway $gateway
     network $red
     broadcast $broadcast
-    gateway $gateway
-    dns-nameservers 1.1.1.1 8.8.8.8" >> /etc/interfaces
-            if ! systemctl restart networking; then
-                return  1
-            else
-                return 0
-            fi
+    dns-nameservers 8.8.8.8 1.1.1.1
+EOF
+
+            ifdown "$interfaz" 2>/dev/null
+            ifup "$interfaz"
             ;;
+
+        ubuntu)
+            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Ubuntu (netplan)"
+
+            cat <<EOF > /etc/netplan/01-static-ip.yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    $interfaz:
+      dhcp4: no
+      addresses:
+        - $IP/$prefijo
+      gateway4: $gateway
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 1.1.1.1
+EOF
+
+            netplan apply
+            ;;
+
+        arch)
+            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Arch Linux"
+
+            mkdir -p /etc/systemd/network
+
+            cat <<EOF > /etc/systemd/network/20-$interfaz.network
+[Match]
+Name=$interfaz
+
+[Network]
+Address=$IP/$prefijo
+Gateway=$gateway
+DNS=8.8.8.8 1.1.1.1
+EOF
+
+            systemctl restart systemd-networkd
+            ;;
+
         *)
-            echo -e "${rojo}[!] - \"$distro\" aùn no soportada${reset}"
+            echo -e "[!] - \"$distro\" aún no soportada"
             return 1
             ;;
     esac
 }
+
 
 if [[ $EUID -ne 0 ]]; then 
     echo -e "${rojoI}[!] - No eres superusuario${reset}"
