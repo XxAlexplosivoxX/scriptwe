@@ -345,7 +345,9 @@ else
     else
         echo -e "${verde}[+] - Todo limpio, prosiguiendo...${reset}"
         echo -e "${amarillo}[!] - Cambiando la ip de ${direccionIP}/${longitudPrefijo} a ${ipSeleccionada}/${longitudPrefijo} en ${interfazActiva}!${reset}"
-        if ! cambiarIP "$interfazActiva" "$ipSeleccionada" "$gateway" "$longitudPrefijo" "$netMask" "$distro" "$ipDeLaRed" "$broadcastIP_decimal"; then
+        $netmaskIP=$(convertirEnteroAIP "$netMask")
+        $broadcastIP=$(convertirEnteroAIP "$broadcastIP_decimal")
+        if ! cambiarIP "$interfazActiva" "$ipSeleccionada" "$gateway" "$longitudPrefijo" "$netmaskIP" "$distro" "$ipDeLaRed" "$broadcastIP"; then
             echo -e "${rojo}[!] - Esta mal en algoo${reset}"
         else
             echo -e "[!] - Ahora tu ip es $ipSeleccionada :D"
