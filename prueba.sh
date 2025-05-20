@@ -169,15 +169,16 @@ cambiarIP() {
 
     case "$distro" in
         debian)
+            echo "" > /etc/interfaces
             echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo}"
             echo "auto $interfaz
-            iface $interfaz inet static
-                address $IP
-                netmask $netmask
-                network $red
-                broadcast $broadcast
-                gateway $gateway
-                dns-nameservers 1.1.1.1 8.8.8.8" >> /etc/interfaces
+iface $interfaz inet static
+    address $IP
+    netmask $netmask
+    network $red
+    broadcast $broadcast
+    gateway $gateway
+    dns-nameservers 1.1.1.1 8.8.8.8" >> /etc/interfaces
             if ! systemctl restart networking; then
                 return  1
             else
