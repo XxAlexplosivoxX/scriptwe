@@ -61,7 +61,7 @@ instalarDependencias() {
     case "$distro" in
         debian)
             arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "php" "php-cli" "php-common" "php-fpm" "php-mysql" "libapache2-mod-php")
-            echo -e "${verde}[!] - Instalando paquetes para Ubuntu${reset}"
+            echo -e "${verde}[!] - Instalando paquetes para Debian${reset}"
             apt update &> /dev/null
             comandoInstalar="apt install -y"
             ;;
