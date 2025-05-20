@@ -156,17 +156,33 @@ cambiarIP() {
     local IP="$2"
     local gateway="$3"
     local prefijo="$4"
-    
-    if ! ip addr flush dev "$interfaz"; then
-        return 1
-    fi
-    if ! ip addr add "${IP}/${prefijo}" dev "$interfaz"; then
-        return 1
-    fi
-    if ! ip route add default via "$gateway"; then
-        return 1
-    fi
-    return 0
+    local netmask="$5"
+    local distro="$6"
+    local red="$7"
+    local broadcast="$8"
+
+    case "$distro" in
+        debian)
+            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo}"
+            echo "auto $interfaz
+            iface $interfaz inet static
+                address $IP
+                netmask $netmask
+                network $red
+                broadcast $broadcast
+                gateway $gateway
+                dns-nameservers 1.1.1.1 8.8.8.8" >> /etc/interfaces
+            if ! systemctl restart networking; then
+                return  1
+            else
+                return 0
+            fi
+            ;;
+        *)
+            echo -e "${rojo}[!] - \"$distro\" aùn no soportada${reset}"
+            return 1
+            ;;
+    esac
 }
 
 if [[ $EUID -ne 0 ]]; then 
@@ -323,7 +339,7 @@ else
     else
         echo -e "${verde}[+] - Todo limpio, prosiguiendo...${reset}"
         echo -e "${amarillo}[!] - Cambiando la ip de ${direccionIP}/${longitudPrefijo} a ${ipSeleccionada}/${longitudPrefijo} en ${interfazActiva}!${reset}"
-        if ! cambiarIP "$interfazActiva" "$ipSeleccionada" "$gateway" "$longitudPrefijo"; then
+        if ! cambiarIP "$interfazActiva" "$ipSeleccionada" "$gateway" "$longitudPrefijo" "$netMask" "$distro" "$ipDeLaRed" "$broadcastIP_decimal"; then
             echo -e "${rojo}[!] - Esta mal en algoo${reset}"
         else
             echo -e "[!] - Ahora tu ip es $ipSeleccionada :D"
