@@ -1,35 +1,34 @@
 #!/usr/bin/env bash
-#    _____    _______    _________.___               .__                       
+#    _____    _______    _________.___               .__
 #   /  _  \   \      \  /   _____/|   |   ____  ____ |  |   ___________  ______
 #  /  /_\  \  /   |   \ \_____  \ |   | _/ ___\/  _ \|  |  /  _ \_  __ \/  ___/
-# /    |    \/    |    \/        \|   | \  \__(  <_> )  |_(  <_> )  | \/\___ \ 
+# /    |    \/    |    \/        \|   | \  \__(  <_> )  |_(  <_> )  | \/\___ \
 # \____|__  /\____|__  /_______  /|___|  \___  >____/|____/\____/|__|  /____  >
-#      \/         \/        \/            \/                             \/ 
-
+#      \/         \/        \/            \/                             \/
 
 negro='\e[0;30m'
 rojo='\e[0;31m'
 verde='\e[0;32m'
-amarillo='\e[0;33m' 
-azul='\e[0;34m' 
-morado='\e[0;35m' 
-cyan='\e[0;36m' 
+amarillo='\e[0;33m'
+azul='\e[0;34m'
+morado='\e[0;35m'
+cyan='\e[0;36m'
 blanco='\e[0;37m'
-negroUnd='\e[0;30m'
-rojoUnd='\e[0;31m'
-verdeUnd='\e[0;32m'
-amarilloUnd='\e[0;33m' 
-azulUnd='\e[0;34m' 
-moradoUnd='\e[0;35m' 
-cyanUnd='\e[0;36m' 
-blancoUnd='\e[0;37m'
+negroUnd='\e[4;30m'
+rojoUnd='\e[4;31m'
+verdeUnd='\e[4;32m'
+amarilloUnd='\e[4;33m'
+azulUnd='\e[4;34m'
+moradoUnd='\e[4;35m'
+cyanUnd='\e[4;36m'
+blancoUnd='\e[4;37m'
 negroI='\e[0;90m'
 rojoI='\e[0;91m'
 verdeI='\e[0;92m'
-amarilloI='\e[0;93m' 
-azulI='\e[0;94m' 
-moradoI='\e[0;95m' 
-cyanI='\e[0;96m' 
+amarilloI='\e[0;93m'
+azulI='\e[0;94m'
+moradoI='\e[0;95m'
+cyanI='\e[0;96m'
 blancoI='\e[0;97m'
 reset='\e[0m'
 
@@ -59,35 +58,31 @@ instalarDependencias() {
     local comandoInstalar=""
 
     case "$distro" in
-        debian)
-            arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "php" "php-cli" "php-common" "php-fpm" "php-mysql" "libapache2-mod-php")
-            echo -e "${verde}[!] - Instalando paquetes para Debian${reset}"
-            apt update &> /dev/null
-            comandoInstalar="apt install -y"
-            ;;
-        ubuntu)
-            arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap")
-            echo -e "${verde}[!] - Instalando paquetes para Ubuntu${reset}"
-            apt update &> /dev/null
-            comandoInstalar="apt install -y"
-            ;;
-        arch)
-            arrDependencias=("hping" "lolcat" "aircrack-ng" "nmap")
-            echo -e "${verde}[!] - Instalando paquetes para Arch linux${reset}"
-            echo -e "${cyan}Actualizando repositorios${reset}"
-            pacman -Sy --noconfirm
-            comandoInstalar="pacman -S --noconfirm"
-            ;;
-        *)
-            return 1
-            ;;
+    debian|ubuntu)
+        arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "libapache2-mod-php" "mysql-server" "unzip")
+        echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
+        apt update &>/dev/null
+        comandoInstalar="apt install -y"
+        comandoComprobar="dpkg -l"
+        ;;
+    arch)
+        arrDependencias=("hping" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "unzip")
+        echo -e "${verde}[!] - Instalando paquetes para Arch linux${reset}"
+        echo -e "${cyan}Actualizando repositorios${reset}"
+        pacman -Sy --noconfirm
+        comandoInstalar="pacman -S --noconfirm"
+        comandoComprobar="pacman -Qi"
+        ;;
+    *)
+        return 1
+        ;;
     esac
 
     for paquete in "${arrDependencias[@]}"; do
-        if ! command -v "$paquete" &> /dev/null; then
+        if ! $comandoComprobar "$paquete" &>/dev/null; then
             echo -e "${verde}[!] - Instalando paquete $paquete${reset}"
-            if $comandoInstalar "$paquete" &> /dev/null; then
-                echo -e "${verdeI}    - $paquete instalado correctamente${reset}"
+            if $comandoInstalar "$paquete" &>/dev/null; then
+                echo -e "${verdeI}[✓] - $paquete instalado correctamente${reset}"
             else
                 echo -e "${rojoI}[!] - Ha fallado la instalación de $paquete${reset}"
             fi
@@ -95,7 +90,58 @@ instalarDependencias() {
             echo -e "${verde}[!] - ${verdeUnd}$paquete${verde} ya está instalado${reset}"
         fi
     done
+
+    # iniciar y habilitar demonios instalados según la distribución
+    case "$distro" in
+        debian|ubuntu)
+            systemctl enable apache2
+            systemctl start apache2
+            systemctl enable mysql
+            systemctl start mysql
+            ;;
+        arch)
+            # systemctl enable httpd
+            # systemctl enable mariadb
+            
+            # echo -e "${cyan}[!] - Inicializando base de datos de MariaDB${reset}"
+            # mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql &>/dev/null
+
+            # systemctl start mariadb
+
+            # # Habilita mod_php y prefork correctamente en Arch Linux (Apache)
+            # sed -i 's|^#LoadModule php_module modules/libphp.*|LoadModule php_module modules/libphp.so|' /etc/httpd/conf/httpd.conf
+            # sed -i 's|^#Include conf/extra/php_module.conf|Include conf/extra/php_module.conf|' /etc/httpd/conf/httpd.conf
+
+            # # Cambia de MPM event a MPM prefork
+            # sed -i 's|^LoadModule mpm_event_module|#LoadModule mpm_event_module|' /etc/httpd/conf/httpd.conf
+            # sed -i '/LoadModule mpm_prefork_module/d' /etc/httpd/conf/httpd.conf
+            # echo "LoadModule mpm_prefork_module modules/mod_mpm_prefork.so" >> /etc/httpd/conf/httpd.conf
+
+            # # Asegura que php_module esté presente solo una vez
+            # sed -i '/LoadModule php_module modules\/libphp.so/d' /etc/httpd/conf/httpd.conf
+            # echo "LoadModule php_module modules/libphp.so" >> /etc/httpd/conf/httpd.conf
+
+            # # Asegura que se incluya la configuración extra
+            # sed -i '/Include conf\/extra\/php_module.conf/d' /etc/httpd/conf/httpd.conf
+            # echo "Include conf/extra/php_module.conf" >> /etc/httpd/conf/httpd.conf
+
+            # # Asegura que index.php sea prioridad en DirectoryIndex
+            # sed -i 's|DirectoryIndex index.html|DirectoryIndex index.php index.html|' /etc/httpd/conf/httpd.conf
+
+            # # Inicia o reinicia Apache
+            # systemctl restart httpd
+            ;;
+        *)
+            return 1
+            ;;
+    esac
     sleep 1
+}
+
+ipADecimal() {
+    local IFS=. ip=$1
+    read -r o1 o2 o3 o4 <<< "$ip"
+    echo $(( (o1 << 24) + (o2 << 16) + (o3 << 8) + o4 ))
 }
 
 convertirEnteroAIP() {
@@ -104,29 +150,29 @@ convertirEnteroAIP() {
     # $((  )) es para hacer una operacion aritmetica en bash, sin esto no funciona
     # ya que esto lo comparte del lenguaje C. Y como comparte esto del lenguaje C
     # no funcionaria el bitshifting (dezplazamiento de bits)
-    # 
+    #
     # ejemplo de codigo C:
     #
     #  int main() {
-    #    
+    #
     #      // a = 21 (00010101 en binario)
     #      unsigned char a = 21;
-    #  
+    #
     #      // si se desplaza a la izquierda 1 bit sera 00101010
     #      printf("a << 1 = %d\n", (a << 1)); // a << 1 = 42
-    #    
+    #
     #    	// si se desplaza a la derecha 2 bits sera 00000101
     #    	printf("a >> 2 = %d", (a >> 2)); // a >> 2 = 5
-    #  
+    #
     #      return 0;
     #  } (incluso los dos tienen el printf xdd)
     printf "%d.%d.%d.%d" \
-        $(( (IPinteger >> 24) & 255 )) \
-        $(( (IPinteger >> 16) & 255 )) \
-        $(( (IPinteger >> 8) & 255 )) \
-        $(( IPinteger & 255 ))
+        $(((IPinteger >> 24) & 255)) \
+        $(((IPinteger >> 16) & 255)) \
+        $(((IPinteger >> 8) & 255)) \
+        $((IPinteger & 255))
     # al desplazar los bits a la derecha "24 espacios" sucede los siguiente:
-    # posicion inicial: 
+    # posicion inicial:
     # 11000000 10101000 00000010 0101000 (en decimal: 1616118056 y queremos 192.168.2.40)
     # dezplazamiento 24 bits a la derecha:
     # 00000000 00000000 00000000 1100000 (solo necesitamos 8 bits)
@@ -166,30 +212,56 @@ cambiarIP() {
     local distro="$6"
     local red="$7"
     local broadcast="$8"
+    local gestor=$(detectarGestorRed)
 
     case "$distro" in
-        debian)
-            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Debian"
+    debian)
+        case "$gestor" in
+        NetworkManager)
+            echo "[!] - Configurando IP estática con NetworkManager"
+            nmcli connection modify "$interfaz" \
+                ipv4.addresses "$IP/$prefijo" \
+                ipv4.gateway "$gateway" \
+                ipv4.dns "8.8.8.8,1.1.1.1" \
+                ipv4.method manual
+            nmcli connection up "$interfaz"
+            ;;
+        systemd-networkd)
+            echo "[!] - Configurando IP con systemd-networkd"
+            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Arch Linux"
 
-            cat <<EOF > /etc/network/interfaces
-auto $interfaz
-iface $interfaz inet static
-    address $IP
-    netmask $netmask
-    gateway $gateway
-    network $red
-    broadcast $broadcast
-    dns-nameservers 8.8.8.8 1.1.1.1
+            mkdir -p /etc/systemd/network
+
+            cat <<EOF >/etc/systemd/network/20-$interfaz.network
+[Match]
+Name=$interfaz
+
+[Network]
+Address=$IP/$prefijo
+Gateway=$gateway
+DNS=8.8.8.8 1.1.1.1
 EOF
 
-            ifdown "$interfaz" 2>/dev/null
-            ifup "$interfaz"
+            systemctl restart systemd-networkd
             ;;
+        manual)
+            echo "[!] - Aplicando con ip link/addr/manual"
+            ip addr flush dev "$interfaz"
+            ip addr add "$IP/$prefijo" dev "$interfaz"
+            ip link set dev "$interfaz" up
+            ip route add default via "$gateway"
+            ;;
+        *)
+            echo "[!] - No se detectó gestor de red compatible"
+            return 1
+            ;;
+        esac
+        ;;
 
-        ubuntu)
-            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Ubuntu (netplan)"
+    ubuntu)
+        echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Ubuntu (netplan)"
 
-            cat <<EOF > /etc/netplan/01-static-ip.yaml
+        cat <<EOF >/etc/netplan/01-static-ip.yaml
 network:
   version: 2
   renderer: networkd
@@ -204,16 +276,31 @@ network:
           - 8.8.8.8
           - 1.1.1.1
 EOF
-
+        if netplan try; then
             netplan apply
-            ;;
+        else
+            echo "${rojo}[!] - Falló netplan...${reset}"
+        fi
+        ;;
 
-        arch)
+    arch)
+        case "$gestor" in
+        NetworkManager)
+            echo "[!] - Configurando IP estática con NetworkManager"
+            nmcli connection modify "$interfaz" \
+                ipv4.addresses "$IP/$prefijo" \
+                ipv4.gateway "$gateway" \
+                ipv4.dns "8.8.8.8,1.1.1.1" \
+                ipv4.method manual
+            nmcli connection up "$interfaz"
+            ;;
+        systemd-networkd)
+            echo "[!] - Configurando IP con systemd-networkd"
             echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Arch Linux"
 
             mkdir -p /etc/systemd/network
 
-            cat <<EOF > /etc/systemd/network/20-$interfaz.network
+            cat <<EOF >/etc/systemd/network/20-$interfaz.network
 [Match]
 Name=$interfaz
 
@@ -225,21 +312,82 @@ EOF
 
             systemctl restart systemd-networkd
             ;;
-
+        iwd)
+            echo "[!] - Conectando Wi-Fi con iwd e IP estática"
+            echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Arch Linux"
+            ip addr flush dev "$interfaz"
+            ip addr add "$IP/$prefijo" dev "$interfaz"
+            ip link set dev "$interfaz" down
+            ip link set dev "$interfaz" up
+            ip route add default via "$gateway"
+            ;;
+        netctl)
+            echo "[!] - Configurando perfil netctl"
+            netctl enable "tu-perfil"
+            netctl start "tu-perfil"
+            ;;
+        manual)
+            echo "[!] - Aplicando con ip link/addr/manual"
+            ip addr flush dev "$interfaz"
+            ip addr add "$IP/$prefijo" dev "$interfaz"
+            ip link set dev "$interfaz" up
+            ip route add default via "$gateway"
+            ;;
         *)
-            echo -e "[!] - \"$distro\" aún no soportada"
+            echo "[!] - No se detectó gestor de red compatible"
             return 1
             ;;
+        esac
+        ;;
+
+    *)
+        echo -e "[!] - \"$distro\" aún no soportada"
+        return 1
+        ;;
     esac
 }
 
+detectarGestorRed() {
+    # 1) NetworkManager Debian/Arch
+    if systemctl is-active --quiet NetworkManager.service; then
+        echo "NetworkManager"
+        return
+    fi
 
-if [[ $EUID -ne 0 ]]; then 
+    # 2) iwd (solo Wi‑Fi) Arch
+    if systemctl is-active --quiet iwd.service; then
+        echo "iwd"
+        return
+    fi
+
+    # 3) systemd-networkd Debian/Arch
+    if systemctl is-active --quiet systemd-networkd.service; then
+        echo "systemd-networkd"
+        return
+    fi
+
+    # 4) netctl Arch
+    if command -v netctl >/dev/null 2>&1 && netctl list | grep -q '^\*'; then
+        echo "netctl"
+        return
+    fi
+
+    # 5) ifupdown clásico (legacy Debian) deprecated
+    if [ -f /etc/network/interfaces ]; then
+        echo "ifupdown"
+        return
+    fi
+
+    # 5) fallback: configuración manual con ip(8)
+    echo "manual"
+}
+
+if [[ $EUID -ne 0 ]]; then
     echo -e "${rojoI}[!] - No eres superusuario${reset}"
     exit 1
 fi
 
-distro=$(detectarDistro);
+distro=$(detectarDistro)
 nombreDistro=$(detectarNombreDistro)
 echo -e "${azul}Distro detectada: ${nombreDistro}, ID=$distro${reset}"
 
@@ -250,13 +398,16 @@ fi
 clear
 
 echo "
-._____________________________________________________________________________________.
-| _______   _______  __ ___________  ______ ____   _____________  _______  ______.__. |
-| \_  __ \_/ __ \  \/ // __ \_  __ \/  ___// __ \  \____ \_  __ \/  _ \  \/  <   |  | |
-|  |  | \/\  ___/\   /\  ___/|  | \\/\\___ \\\\  ___/  |  |_> >  |  (  <_> >    < \\___  | |
-|  |__|    \___  >\_/  \___  >__|  /____  >\___  > |   __/|__|   \____/__/\_ \/ ____| |
-|              \/          \/           \/     \/  |__|                     \/\/      |
-|_____________________________________________________________________________________|
+    ______                 __                                    __  _            
+   / ____/________  ____  / /_____ _______________  __  ______  / /_(_)___  ____ _
+  / /_  / ___/ __ \/ __ \/ __/ __ '/ ___/ ___/ __ \/ / / / __ \/ __/ / __ \/ __ '/
+ / __/ / /  / /_/ / / / / /_/ /_/ / /__/ /__/ /_/ / /_/ / / / / /_/ / / / / /_/ / 
+/_/   /_/   \____/_/ /_/\__/\__,_/\___/\___/\____/\__,_/_/ /_/\__/_/_/ /_/\__, /  
+                      (_)___  _____/ /_____ _/ / /__  _____              /____/   
+                     / / __ \/ ___/ __/ __ '/ / / _ \/ ___/                       
+                    / / / / (__  ) /_/ /_/ / / /  __/ /                           
+                   /_/_/ /_/____/\__/\__,_/_/_/\___/_/                            
+                                                                                  
 " | lolcat
 
 interfazActiva=$(ip route get 8.8.8.8 2>/dev/null | awk 'NR==1{print $5}')
@@ -264,30 +415,29 @@ gateway=$(ip route | awk '/default/ {print $3}')
 ipLocal=$(ip -o -4 addr show dev "$interfazActiva" | awk '{print $4}')
 
 if [[ -z "$ipLocal" ]]; then
-    echo -e "${rojo}[!] - No se encontró dirección IPv4 en la interfaz ${rojoI}$interfazActiva.${reset}" >&2
+    echo -e "${rojo}[!] - No se encontró dirección IPv4 en la interfaz ${rojoI}$interfazActiva.${reset}"
     exit 1
 fi
 
 direccionIP=${ipLocal%/*}
 longitudPrefijo=${ipLocal#*/}
 
-echo -e "${cyan}[+] - Interfaz: ${cyanI}$interfazActiva"
-echo -e "${cyan}[+] - IP usada actualmente: ${cyanI}$ipLocal"
+echo -e "${cyan}[✓] - Interfaz: ${cyanI}$interfazActiva"
+echo -e "${cyan}[✓] - IP usada actualmente: ${cyanI}$ipLocal"
 
 # Calcular IP de red y broadcast
-IFS=. read -r oct1 oct2 oct3 oct4 <<< "$direccionIP"
-decimalIP=$(( (oct1 << 24) + (oct2 << 16) + (oct3 << 8) + oct4 ))
-netMask=$(( 0xFFFFFFFF << (32 - longitudPrefijo) & 0xFFFFFFFF ))
-direccionIP_decimal=$(( decimalIP & netMask ))
-broadcastIP_decimal=$(( direccionIP_decimal | ~netMask & 0xFFFFFFFF ))
+decimalIP=$(ipADecimal "$direccionIP")
+netMask=$((0xFFFFFFFF << (32 - longitudPrefijo) & 0xFFFFFFFF))
+direccionIP_decimal=$((decimalIP & netMask))
+broadcastIP_decimal=$((direccionIP_decimal | ~netMask & 0xFFFFFFFF))
 
 ipDeLaRed=$(convertirEnteroAIP "$direccionIP_decimal")
 
-echo -e "${cyan}[+] - Red detectada: ${cyanI}${ipDeLaRed}/${longitudPrefijo}${reset}"
+echo -e "${cyan}[✓] - Red detectada: ${cyanI}${ipDeLaRed}/${longitudPrefijo}${reset}"
 
 # Crear array con IPs dentro del rango usable
 ipsUsables=()
-for (( i = direccionIP_decimal + 1; i < broadcastIP_decimal; i++ )); do
+for ((i = direccionIP_decimal + 1; i < broadcastIP_decimal; i++)); do
     ipsUsables+=("$(convertirEnteroAIP "$i")")
 done
 
@@ -297,7 +447,7 @@ while true; do
     echo -en "${cyan}[?] - ${cyanI}Ingresa la cantidad de procesos de escaneo de host en paralelo (dejalo vacio para tomar su valor por defecto):${reset} "
     read cantidadProcesosParaleloUsuario
     if [[ "$cantidadProcesosParaleloUsuario" =~ ^[0-9]+$ || -z $cantidadProcesosParaleloUsuario ]]; then
-        if [[ -z $cantidadProcesosParaleloUsuario ]];then
+        if [[ -z $cantidadProcesosParaleloUsuario ]]; then
             cantidadProcesosParalelo=100
             break
         else
@@ -305,7 +455,7 @@ while true; do
             break
         fi
     else
-        echo -e "${rojoI}[!] - Coloque una cantidad válida!!${reset}/n"
+        echo -e "${rojoI}[!] - Coloque una cantidad válida!!${reset}\n"
     fi
 done
 clear
@@ -317,7 +467,7 @@ ipUsadas=()
 ipDisponibles=()
 
 # Ejecutar escaneo en paralelo y guardar salida
-printf "%s\n" "${ipsUsables[@]}" | xargs -P $cantidadProcesosParalelo -I {} bash -c 'escanearIPs "$@"' _ {} > "$tempfile"
+printf "%s\n" "${ipsUsables[@]}" | xargs -P $cantidadProcesosParalelo -I {} bash -c 'escanearIPs "$@"' _ {} >"$tempfile"
 
 clear
 
@@ -328,13 +478,13 @@ while read -r status ipResult; do
     else
         ipDisponibles+=("$ipResult")
     fi
-done < "$tempfile"
+done <"$tempfile"
 
 rm -f "$tempfile"
 
 # Mostrar IPs usadas
 echo -e "\n${cyan}[+] - IPs usadas (${#ipUsadas[@]}/$conteoTotalDeIP):${reset}"
-if (( ${#ipUsadas[@]} > 0 )); then
+if ((${#ipUsadas[@]} > 0)); then
     for i in "${!ipUsadas[@]}"; do
         printf "${amarillo}%3d)${reset} %s\n" $((i + 1)) "${ipUsadas[i]}"
     done
@@ -344,7 +494,7 @@ fi
 
 # Mostrar IPs disponibles con numeración
 echo -e "\n${cyan}[+] - IPs disponibles (${#ipDisponibles[@]}/$conteoTotalDeIP):${reset}"
-if (( ${#ipDisponibles[@]} > 0 )); then
+if ((${#ipDisponibles[@]} > 0)); then
     for i in "${!ipDisponibles[@]}"; do
         printf "${verde}%3d)${reset} %s\n" $((i + 1)) "${ipDisponibles[i]}"
     done
@@ -354,47 +504,36 @@ fi
 
 # Selección de IP disponible
 echo
-if (( ${#ipDisponibles[@]} == 0 )); then
-    echo -e "${amarillo}[!] - No hay IPs disponibles, pero selecciona una de las IPs usadas.${reset}"
-    listoPaRobar=true
-    while true; do
-        read -rp $'\n[+] - Seleccione número de IP en uso (pa robarla w): ' indiceSeleccion
-        if [[ "$indiceSeleccion" =~ ^[0-9]+$ ]] && (( indiceSeleccion >= 1 && indiceSeleccion <= ${#ipUsadas[@]} )); then
-            ipSeleccionada="${ipUsadas[indiceSeleccion - 1]}"
-            break
-        else
-            echo -e  "${rojo}[!] - Selección inválida. Introduzca un número entre 1 y ${#ipUsadas[@]}.${reset}"
-        fi
-    done
+if ((${#ipDisponibles[@]} == 0)); then
+    echo -e "${amarillo}[!] - No hay IPs disponibles, usalo más tarde.${reset}"
+    exit 1
 else
-    listoPaRobar=false
     while true; do
         read -rp $'\n[+] - Seleccione número de IP disponible: ' indiceSeleccion
-        if [[ "$indiceSeleccion" =~ ^[0-9]+$ ]] && (( indiceSeleccion >= 1 && indiceSeleccion <= ${#ipDisponibles[@]} )); then
-            ipSeleccionada="${ipDisponibles[indiceSeleccion - 1]}"
+        if [[ "$indiceSeleccion" =~ ^[0-9]+$ ]] && ((indiceSeleccion >= 1 && indiceSeleccion <= ${#ipDisponibles[@]})); then
+            IPSeleccionada="${ipDisponibles[indiceSeleccion - 1]}"
+            echo -e "${verde}[✓] - IP seleccionada: ${verdeI}$IPSeleccionada${reset}"
             break
         else
-            echo -e  "${rojo}[!] - Selección inválida. Introduzca un número entre 1 y ${#ipDisponibles[@]}.${reset}"
+            echo -e "${rojo}[!] - Índice inválido. Intente de nuevo.${reset}"
         fi
     done
+
+    # Confirmar el cambio de IP
+    echo
+    read -rp $'[?] - ¿Deseas configurar esta IP como estática? [s/N]: ' confirmacion
+    if [[ "$confirmacion" =~ ^[Ss]$ ]]; then
+        netmask=$(convertirEnteroAIP "$netMask")
+        cambiarIP "$interfazActiva" "$IPSeleccionada" "$gateway" "$longitudPrefijo" "$netmask" "$distro" "$ipDeLaRed" "$(convertirEnteroAIP "$broadcastIP_decimal")"
+        echo -e "${verdeI}[✓] - IP configurada exitosamente${reset}"
+    else
+        echo -e "${amarillo}[!] - Operación cancelada por el usuario${reset}"
+    fi
 fi
 
-if $listoPaRobar; then
-    echo -e "${cyan}[+] - IP seleccionada: ${ipSeleccionada}, ${rojoI}robando la ip >:3${reset}"
+echo -e "${cyan}[+] - Verificando conectividad con 8.8.8.8...${reset}"
+if ping -c 2 8.8.8.8 &>/dev/null; then
+    echo -e "${verdeI}[✓] - ¡Conectividad verificada!${reset}"
 else
-    echo -e "${cyan}[+] - IP seleccionada: ${ipSeleccionada}, ${amarillo}verificando que no este nadie usandola...${reset}"
-    if verificarIP "$ipSeleccionada"; then
-        echo -e "${rojo}[!] - Alguien la esta usando, ${rojoI}robando la ip >:3${reset}"
-    else
-        echo -e "${verde}[+] - Todo limpio, prosiguiendo...${reset}"
-        echo -e "${amarillo}[!] - Cambiando la ip de ${direccionIP}/${longitudPrefijo} a ${ipSeleccionada}/${longitudPrefijo} en ${interfazActiva}!${reset}"
-        netmaskIP=$(convertirEnteroAIP "$netMask")
-        broadcastIP=$(convertirEnteroAIP "$broadcastIP_decimal")
-        if ! cambiarIP "$interfazActiva" "$ipSeleccionada" "$gateway" "$longitudPrefijo" "$netmaskIP" "$distro" "$ipDeLaRed" "$broadcastIP"; then
-            echo -e "${rojo}[!] - Esta mal en algoo${reset}"
-        else
-            echo -e "[!] - Ahora tu ip es $ipSeleccionada :D"
-        fi
-        
-    fi
+    echo -e "${rojoI}[X] - No hay conectividad. Revisa configuración.${reset}"
 fi
