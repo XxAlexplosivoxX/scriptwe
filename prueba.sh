@@ -176,7 +176,7 @@ fix_frontaccounting_permissions() {
     fi
 
     # 2. Asegurar que /tmp sea escribible
-    chmod 755 /tmp && echo -e "${verde}[✓] - Permisos corregidos: /tmp${reset}"
+    chmod 1777 /tmp && echo -e "${verde}[✓] - Permisos corregidos: /tmp${reset}"
 
     # 3. Permisos para company/0/
     if [ -d "$fa_path/company/0" ]; then
@@ -203,7 +203,7 @@ instalarFrontAccounting() {
             fi
             echo -e "${verde}[+] - Asignando permisos...${reset}"
             chown -R www-data:www-data /var/www/html/frontaccounting
-            chmod -R 755 /var/www/html/frontaccounting
+            chmod -R 777 /var/www/html/frontaccounting
             echo -e "${verde}[+] - Asegurando que Apache esté corriendo...${reset}"
             if systemctl status apache2 &>/dev/null; then
                 systemctl start apache2
@@ -219,8 +219,8 @@ instalarFrontAccounting() {
                 echo -e "${amarillo}[!] - Ya existe /srv/http/frontaccounting, omitiendo clonación${reset}"
             fi
             echo -e "${verde}[+] - Asignando permisos...${reset}"
-            chown -R www-data:www-data /srv/http/frontaccounting
-            chmod -R 755 /srv/http/frontaccounting
+            chown -R http:http /srv/http/frontaccounting
+            chmod -R 777 /srv/http/frontaccounting
             echo -e "${verde}[+] - Asegurando que Apache esté corriendo...${reset}"
             if systemctl status httpd &>/dev/null; then
                 systemctl start httpd
