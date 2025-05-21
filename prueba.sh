@@ -59,14 +59,14 @@ instalarDependencias() {
 
     case "$distro" in
     debian|ubuntu)
-        arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "libapache2-mod-php" "mysql-server" "unzip")
+        arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "mysql-server" "unzip")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
         apt update &>/dev/null
         comandoInstalar="apt install -y"
         comandoComprobar="dpkg -l"
         ;;
     arch)
-        arrDependencias=("hping" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "unzip")
+        arrDependencias=("hping" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "unzip" "php-fpm" "php-gd")
         echo -e "${verde}[!] - Instalando paquetes para Arch linux${reset}"
         echo -e "${cyan}Actualizando repositorios${reset}"
         pacman -Sy --noconfirm
@@ -91,7 +91,7 @@ instalarDependencias() {
         fi
     done
 
-    # iniciar y habilitar demonios instalados según la distribución
+    # iniciar, habilitar o configurar demonios instalados según la distribución
     case "$distro" in
         debian|ubuntu)
             systemctl enable apache2
@@ -100,42 +100,152 @@ instalarDependencias() {
             systemctl start mysql
             ;;
         arch)
-            # systemctl enable httpd
-            # systemctl enable mariadb
+            systemctl enable httpd
+            systemctl enable mariadb
             
-            # echo -e "${cyan}[!] - Inicializando base de datos de MariaDB${reset}"
-            # mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql &>/dev/null
+            echo -e "${cyan}[!] - Inicializando base de datos de MariaDB${reset}"
+            mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql &>/dev/null
 
-            # systemctl start mariadb
+            systemctl start mariadb
 
-            # # Habilita mod_php y prefork correctamente en Arch Linux (Apache)
-            # sed -i 's|^#LoadModule php_module modules/libphp.*|LoadModule php_module modules/libphp.so|' /etc/httpd/conf/httpd.conf
-            # sed -i 's|^#Include conf/extra/php_module.conf|Include conf/extra/php_module.conf|' /etc/httpd/conf/httpd.conf
+            # Habilita mod_php y prefork correctamente en Arch Linux (Apache)
+            sed -i 's|^#LoadModule php_module modules/libphp.*|LoadModule php_module modules/libphp.so|' /etc/httpd/conf/httpd.conf
+            sed -i 's|^#Include conf/extra/php_module.conf|Include conf/extra/php_module.conf|' /etc/httpd/conf/httpd.conf
 
-            # # Cambia de MPM event a MPM prefork
-            # sed -i 's|^LoadModule mpm_event_module|#LoadModule mpm_event_module|' /etc/httpd/conf/httpd.conf
-            # sed -i '/LoadModule mpm_prefork_module/d' /etc/httpd/conf/httpd.conf
-            # echo "LoadModule mpm_prefork_module modules/mod_mpm_prefork.so" >> /etc/httpd/conf/httpd.conf
+            # Cambia de MPM event a MPM prefork
+            sed -i 's|^LoadModule mpm_event_module|#LoadModule mpm_event_module|' /etc/httpd/conf/httpd.conf
+            sed -i '/LoadModule mpm_prefork_module/d' /etc/httpd/conf/httpd.conf
+            echo "LoadModule mpm_prefork_module modules/mod_mpm_prefork.so" >> /etc/httpd/conf/httpd.conf
 
-            # # Asegura que php_module esté presente solo una vez
-            # sed -i '/LoadModule php_module modules\/libphp.so/d' /etc/httpd/conf/httpd.conf
-            # echo "LoadModule php_module modules/libphp.so" >> /etc/httpd/conf/httpd.conf
+            # Asegura que php_module esté presente solo una vez
+            sed -i '/LoadModule php_module modules\/libphp.so/d' /etc/httpd/conf/httpd.conf
+            echo "LoadModule php_module modules/libphp.so" >> /etc/httpd/conf/httpd.conf
 
-            # # Asegura que se incluya la configuración extra
-            # sed -i '/Include conf\/extra\/php_module.conf/d' /etc/httpd/conf/httpd.conf
-            # echo "Include conf/extra/php_module.conf" >> /etc/httpd/conf/httpd.conf
+            # Asegura que se incluya la configuración extra
+            sed -i '/Include conf\/extra\/php_module.conf/d' /etc/httpd/conf/httpd.conf
+            echo "Include conf/extra/php_module.conf" >> /etc/httpd/conf/httpd.conf
 
-            # # Asegura que index.php sea prioridad en DirectoryIndex
-            # sed -i 's|DirectoryIndex index.html|DirectoryIndex index.php index.html|' /etc/httpd/conf/httpd.conf
+            # Asegura que index.php sea prioridad en DirectoryIndex
+            sed -i 's|DirectoryIndex index.html|DirectoryIndex index.php index.html|' /etc/httpd/conf/httpd.conf
 
-            # # Inicia o reinicia Apache
-            # systemctl restart httpd
+
+            # activar extenciones necesarioas para frontaccounting en php.ini 
+            sed -i 's/^;extension=curl/extension=curl/' /etc/php/php.ini
+            sed -i 's/^;extension=xml/extension=xml/' /etc/php/php.ini
+            sed -i 's/^;extension=mbstring/extension=mbstring/' /etc/php/php.ini
+            sed -i 's/^;extension=gd/extension=gd/' /etc/php/php.ini
+            sed -i 's/^;extension=mysqli/extension=mysqli/' /etc/php/php.ini
+            sed -i 's/^;extension=pdo_mysql/extension=pdo_mysql/' /etc/php/php.ini
+
+            # Inicia Apache
+            systemctl start httpd
+            systemctl reload httpd
             ;;
         *)
             return 1
             ;;
     esac
     sleep 1
+}
+
+
+fix_frontaccounting_permissions() {
+    local fa_path="$1"  # Ajusta si es diferente
+    local web_user
+
+    echo -e "${cyan}[!] -  Corrigiendo permisos de FrontAccounting...${reset}"
+
+    # Detectar el usuario bajo el que corre Apache/Nginx
+    if id http &>/dev/null; then
+        web_user="http"
+    elif id www-data &>/dev/null; then
+        web_user="www-data"
+    elif id apache &>/dev/null; then
+        web_user="apache"
+    else
+        echo -e "${rojo}[!] -  No se pudo detectar el usuario web (www-data/http/apache).${reset}"
+        return 1
+    fi
+
+    # 1. Permitir escritura en config.php si existe
+    if [ -f "$fa_path/config.php" ]; then
+        chmod 666 "$fa_path/config.php"
+        echo -e "${verde}[✓] - Permisos corregidos: config.php${reset}"
+    else
+        echo -e "${amarillo}[!] -  Archivo config.php no encontrado en $fa_path${reset}"
+    fi
+
+    # 2. Asegurar que /tmp sea escribible
+    chmod 755 /tmp && echo -e "${verde}[✓] - Permisos corregidos: /tmp${reset}"
+
+    # 3. Permisos para company/0/
+    if [ -d "$fa_path/company/0" ]; then
+        chown -R "$web_user":"$web_user" "$fa_path/company/0"
+        chmod -R 755 "$fa_path/company/0"
+        echo -e "${verde}[✓] - Permisos corregidos: company/0/${reset}"
+    else
+        echo -e "${amarillo}[!] - Directorio company/0 no encontrado en $fa_path${reset}"
+    fi
+
+    echo -e "${verde}[✓] - Permisos de FrontAccounting corregidos.${reset}"
+}
+
+instalarFrontAccounting() {
+    local distro="$1"
+
+    case "$distro" in
+        debian|ubuntu)
+            echo -e "${verde}[+] - Descargando FrontAccounting...${reset}"
+            if [ ! -d "/var/www/html/frontaccounting" ]; then
+                git clone -q https://git.code.sf.net/p/frontaccounting/git /var/www/html/frontaccounting
+            else
+                echo -e "${amarillo}[!] - Ya existe /var/www/html/frontaccounting, omitiendo clonación${reset}"
+            fi
+            echo -e "${verde}[+] - Asignando permisos...${reset}"
+            chown -R www-data:www-data /var/www/html/frontaccounting
+            chmod -R 755 /var/www/html/frontaccounting
+            echo -e "${verde}[+] - Asegurando que Apache esté corriendo...${reset}"
+            if systemctl status apache2 &>/dev/null; then
+                systemctl start apache2
+                systemctl reload apache2
+            fi
+            fix_frontaccounting_permissions "/var/www/html/frontaccounting"
+            ;;
+        arch)
+            echo -e "${verde}[+] - Descargando FrontAccounting...${reset}"
+            if [ ! -d "/srv/http/frontaccounting" ]; then
+                git clone -q https://git.code.sf.net/p/frontaccounting/git /srv/http/frontaccounting
+            else
+                echo -e "${amarillo}[!] - Ya existe /srv/http/frontaccounting, omitiendo clonación${reset}"
+            fi
+            echo -e "${verde}[+] - Asignando permisos...${reset}"
+            chown -R www-data:www-data /srv/http/frontaccounting
+            chmod -R 755 /srv/http/frontaccounting
+            echo -e "${verde}[+] - Asegurando que Apache esté corriendo...${reset}"
+            if systemctl status httpd &>/dev/null; then
+                systemctl start httpd
+                systemctl reload httpd
+            fi
+            fix_frontaccounting_permissions "/srv/http/frontaccounting"
+            ;;
+        *)
+            echo -e "${rojo}[!] - pa esa distro \"$distro\" no hay!"
+            ;;
+    esac
+}
+
+configurarMariaDB() {
+    echo -e "${verde}[+] - Protegiendo MariaDB con mysql_secure_installation...${reset}"
+    mysql_secure_installation
+
+    echo -e "${verde}[+] - Creando base de datos y usuario para FrontAccounting...${reset}"
+    mysql --protocol=socket <<EOF
+CREATE DATABASE frontdb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'javi'@'localhost' IDENTIFIED BY '1751';
+GRANT ALL PRIVILEGES ON frontdb.* TO 'javi'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+EOF
 }
 
 ipADecimal() {
@@ -213,6 +323,7 @@ cambiarIP() {
     local red="$7"
     local broadcast="$8"
     local gestor=$(detectarGestorRed)
+    local perfil="static-$interfaz"
 
     case "$distro" in
     debian)
@@ -323,8 +434,17 @@ EOF
             ;;
         netctl)
             echo "[!] - Configurando perfil netctl"
-            netctl enable "tu-perfil"
-            netctl start "tu-perfil"
+            cat <<EOF >/etc/netctl/$perfil
+Description='Static IP on $interfaz'
+Interface=$interfaz
+Connection=ethernet
+IP=static
+Address=('$IP/$prefijo')
+Gateway='$gateway'
+DNS=('8.8.8.8' '1.1.1.1')
+EOF
+            netctl enable "$perfil"
+            netctl start "$perfil"
             ;;
         manual)
             echo "[!] - Aplicando con ip link/addr/manual"
@@ -396,6 +516,9 @@ if ! instalarDependencias "$distro"; then
     exit 0
 fi
 clear
+
+configurarMariaDB
+instalarFrontAccounting "$distro"
 
 echo "
     ______                 __                                    __  _            
