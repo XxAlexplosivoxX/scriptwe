@@ -265,7 +265,6 @@ configurarMariaDB() {
 CREATE DATABASE $dbMysql DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER '$usuarioMysql'@'localhost' IDENTIFIED BY '$usuarioMysql';
 GRANT ALL PRIVILEGES ON $dbMysql.* TO '$usuarioMysql'@'localhost';
-FLUSH PRIVILEGES;
 EXIT;
 EOF
 }
