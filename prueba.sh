@@ -250,10 +250,10 @@ configurarMariaDB() {
             echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql \n"
 
             read -rp $"[!] - es correcto?[s/n]: " respuesta
-            if [[ ! "$respuesta" =~ ^[sS]$ ]]; then
+            if [[ "$respuesta" =~ ^[sS]$ ]]; then
                 echo -e "${verde}[!] - OK...${reset}"
                 break
-            elif  [[ ! "$respuesta" =~ ^[nN]$ ]]; then
+            elif  [[ "$respuesta" =~ ^[nN]$ ]]; then
                 echo -e "${verde}[!] - OK...${reset}"
             else
                 echo -e "${rojo}[!] - respuesta inválida${reset}"
