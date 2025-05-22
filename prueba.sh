@@ -247,7 +247,7 @@ configurarMariaDB() {
             echo -e "${verde}[?] - Todo correcto con:"
             echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql"
             echo -e "${cyan}[?] - contraseña de mysql: $passwdMysql"
-            echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql \n"
+            echo -e "${cyan}[?] - nombre de la db mysql: $dbMysql \n"
 
             read -rp $"[!] - es correcto?[s/n]: " respuesta
             if [[ "$respuesta" =~ ^[sS]$ ]]; then
