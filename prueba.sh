@@ -59,14 +59,14 @@ instalarDependencias() {
 
     case "$distro" in
     debian|ubuntu)
-        arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "mysql-server" "unzip")
+        arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "mysql-server" "git")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
         apt update &>/dev/null
         comandoInstalar="apt install -y"
         comandoComprobar="dpkg -l"
         ;;
     arch)
-        arrDependencias=("hping" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "unzip" "php-fpm" "php-gd")
+        arrDependencias=("hping" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "git" "php-fpm" "php-gd")
         echo -e "${verde}[!] - Instalando paquetes para Arch linux${reset}"
         echo -e "${cyan}Actualizando repositorios${reset}"
         pacman -Sy --noconfirm
@@ -237,12 +237,17 @@ instalarFrontAccounting() {
 configurarMariaDB() {
     echo -e "${verde}[+] - Protegiendo MariaDB con mysql_secure_installation...${reset}"
     mysql_secure_installation
-
+    read -rp $"[?] - Usuario pàra mysql: " usuarioMysql
+    read -rp $"[?] - Contraseña pàra mysql: " passwdMysql
+    read -rp $"[?] - Nombre para la base de datos de mysql: " dbMysql
+    if [[ ! "$usuarioMysql" =~ ^[a-zA-Z0-9]$ && ! "$passwdMysql" =~ ^[a-zA-Z0-9]$ && ! "$dbMysql" =~ ^[a-zA-Z0-9]$ ]]; then
+        echo -e "${rojo}[!] - solo se permiten letras de la a a la z y numeros del 0 al 9${reset}"
+    fi
     echo -e "${verde}[+] - Creando base de datos y usuario para FrontAccounting...${reset}"
     mysql --protocol=socket <<EOF
-CREATE DATABASE frontdb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'javi'@'localhost' IDENTIFIED BY '1751';
-GRANT ALL PRIVILEGES ON frontdb.* TO 'javi'@'localhost';
+CREATE DATABASE $dbMysql DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER '$usuarioMysql'@'localhost' IDENTIFIED BY '$usuarioMysql';
+GRANT ALL PRIVILEGES ON $dbMysql.* TO '$usuarioMysql'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 EOF
