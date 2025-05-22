@@ -237,13 +237,30 @@ instalarFrontAccounting() {
 configurarMariaDB() {
     echo -e "${verde}[+] - Protegiendo MariaDB con mysql_secure_installation...${reset}"
     mysql_secure_installation
-    read -rp $"[?] - Usuario pàra mysql: " usuarioMysql
-    read -rp $"[?] - Contraseña pàra mysql: " passwdMysql
-    read -rp $"[?] - Nombre para la base de datos de mysql: " dbMysql
-    if [[ ! "$usuarioMysql" =~ ^[a-zA-Z0-9]$ && ! "$passwdMysql" =~ ^[a-zA-Z0-9]$ && ! "$dbMysql" =~ ^[a-zA-Z0-9]$ ]]; then
-        echo -e "${rojo}[!] - solo se permiten letras de la a a la z y numeros del 0 al 9${reset}"
-    fi
-    echo -e "${verde}[+] - Creando base de datos y usuario para FrontAccounting...${reset}"
+    while true; do
+        read -rp $"[?] - Usuario pàra mysql: " usuarioMysql
+        read -rp $"[?] - Contraseña pàra mysql: " passwdMysql
+        read -rp $"[?] - Nombre para la base de datos de mysql: " dbMysql
+        if [[ ! "$usuarioMysql" =~ ^[a-z]|[A-Z]|[0-9]$ && ! "$passwdMysql" =~ ^[a-z]|[A-Z]|[0-9]$ && ! "$dbMysql" =~ ^[a-z]|[A-Z]|[0-9]$ ]]; then
+            echo -e "${rojo}[!] - solo se permiten letras de la a a la z y numeros del 0 al 9${reset}"
+        else
+            echo -e "${verde}[!] - Todo correcto con:"
+            echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql"
+            echo -e "${cyan}[?] - contraseña de mysql: $passwdMysql"
+            echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql \n"
+
+            read -rp $"[!] - es correcto?[s/n]: " respuesta
+            if [[ ! "$respuesta" =~ ^[sS]$ ]]; then
+                echo -e "${verde}[!] - OK...${reset}"
+                break
+            elif  [[ ! "$respuesta" =~ ^[nN]$ ]]; then
+                echo -e "${verde}[!] - OK...${reset}"
+            else
+                echo -e "${rojo}[!] - respuesta inválida${reset}"
+            fi
+        fi
+        echo -e "${verde}[+] - Creando base de datos y usuario para FrontAccounting...${reset}"
+    done
     mysql --protocol=socket <<EOF
 CREATE DATABASE $dbMysql DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER '$usuarioMysql'@'localhost' IDENTIFIED BY '$usuarioMysql';
