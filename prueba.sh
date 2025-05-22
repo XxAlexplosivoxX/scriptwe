@@ -244,7 +244,7 @@ configurarMariaDB() {
         if [[ ! "$usuarioMysql" =~ ^[a-z]|[A-Z]|[0-9]$ && ! "$passwdMysql" =~ ^[a-z]|[A-Z]|[0-9]$ && ! "$dbMysql" =~ ^[a-z]|[A-Z]|[0-9]$ ]]; then
             echo -e "${rojo}[!] - solo se permiten letras de la a a la z y numeros del 0 al 9${reset}"
         else
-            echo -e "${verde}[!] - Todo correcto con:"
+            echo -e "${verde}[?] - Todo correcto con:"
             echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql"
             echo -e "${cyan}[?] - contraseña de mysql: $passwdMysql"
             echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql \n"
