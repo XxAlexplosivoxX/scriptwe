@@ -66,7 +66,7 @@ instalarDependencias() {
         comandoComprobar="dpkg -l"
         ;;
     arch)
-        arrDependencias=("hping" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "git" "php-fpm" "php-gd")
+        arrDependencias=("hping" "git" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "git" "php-fpm" "php-gd")
         echo -e "${verde}[!] - Instalando paquetes para Arch linux${reset}"
         echo -e "${cyan}Actualizando repositorios${reset}"
         pacman -Sy --noconfirm
