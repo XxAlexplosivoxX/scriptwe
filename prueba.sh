@@ -64,7 +64,7 @@ instalarDependencias() {
         echo -e "${cyan}[!] - actualizando paquetes...${reset}"
         apt update &>/dev/null
         comandoInstalar="apt install -y"
-        comandoComprobar="dpkg -l"
+        comandoComprobar="dpkg -s"
         ;;
     arch)
         arrDependencias=("hping" "git" "lolcat" "aircrack-ng" "nmap" "apache" "php" "php-apache" "mariadb" "git" "php-fpm" "php-gd")
@@ -238,12 +238,14 @@ instalarFrontAccounting() {
 configurarMariaDB() {
     echo -e "${verde}[+] - Protegiendo MariaDB con mysql_secure_installation...${reset}"
     mysql_secure_installation
+    echo -e "${cyan}[1] - políticas para contraseñas:${reset}"
+    mysql --protocol=socket -e "SHOW VARIABLES LIKE 'validate_password%';"
     while true; do
-        read -rp $"[?] - Usuario pàra mysql: " usuarioMysql
-        read -rp $"[?] - Contraseña pàra mysql: " passwdMysql
+        read -rp $"[?] - Usuario pára mysql: " usuarioMysql
+        read -rp $"[?] - Contraseña pára mysql: " passwdMysql
         read -rp $"[?] - Nombre para la base de datos de mysql: " dbMysql
-        if [[ ! "$usuarioMysql" =~ ^[a-zA-Z0-9]+$ || ! "$passwdMysql" =~ ^[a-zA-Z0-9]+$ || ! "$dbMysql" =~ ^[a-zA-Z0-9]+$ ]]; then
-            echo -e "${rojo}[!] - solo se permiten letras de la a a la z y numeros del 0 al 9${reset}"
+        if [[ ! "$usuarioMysql" =~ ^[^\ ]+$ || ! "$passwdMysql" =~  ^[^\ ]+$ || ! "$dbMysql" =~ ^[^\ ]+$ ]]; then
+            echo -e "${rojo}[!] - No se permiten espacios en blanco.${reset}"
         else
             echo -e "${verde}[?] - Todo correcto con:"
             echo -e "${cyan}[?] - usuario de mysql: $usuarioMysql"
@@ -393,26 +395,34 @@ EOF
 
     ubuntu)
         echo -e "[!] - Cambiando IP fija a ${IP}/${prefijo} en Ubuntu (netplan)"
-
-        cat <<EOF >/etc/netplan/01-static-ip.yaml
+        archivoNetplan="/etc/netplan/01-static-ip.yaml"
+        if [[ -f "/etc/netplan/01-network-manager-all.yaml" ]]; then
+            sudo mv /etc/netplan/01-network-manager-all.yaml /etc/netplan/01-network-manager-all.yaml.backup
+        fi
+    cat <<EOF >"$archivoNetplan"
 network:
   version: 2
-  renderer: networkd
-  ethernets:
+  renderer: NetworkManager
+  devices:
     $interfaz:
       dhcp4: no
       addresses:
         - $IP/$prefijo
-      gateway4: $gateway
+      routes:
+        - to: 0.0.0.0/0
+          via: $gateway
       nameservers:
         addresses:
           - 8.8.8.8
           - 1.1.1.1
 EOF
+        chmod 600 "$archivoNetplan"
+
         if netplan try; then
             netplan apply
         else
-            echo "${rojo}[!] - Falló netplan...${reset}"
+            echo -e "${rojo}[!] - Falló netplan...${reset}"
+            return 1
         fi
         ;;
 
