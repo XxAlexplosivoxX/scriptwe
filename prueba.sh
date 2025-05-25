@@ -564,7 +564,7 @@ if ! instalarDependencias "$distro"; then
 fi
 clear
 
-echo -en "${cyan}[!] quieres configurar un usuario con una base de datos ya (s/n)?${reset}"
+echo -en "${cyan}[!] quieres configurar un usuario con una base de datos ya (s/n)?: ${reset}"
 read respuesta
 if [[ "$respuesta" =~ ^[sS]$ ]]; then
     configurarMariaDB
