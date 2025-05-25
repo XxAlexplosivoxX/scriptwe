@@ -67,7 +67,7 @@ instalarDependencias() {
         comandoComprobar="dpkg -s"
         ;;
     debian)
-        arrDependencias=("wget" "hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "git")
+        arrDependencias=("wget" "hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "git" "mysql-server")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
         echo -e "${cyan}[!] - actualizando paquetes...${reset}"
         wget https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb
