@@ -365,13 +365,16 @@ cambiarIP() {
     debian)
         case "$gestor" in
         NetworkManager)
+            # Buscar la conexión que usa esa interfaz
+            local conexion=$(nmcli -t -f NAME,DEVICE connection show | grep ":$interfaz$" | cut -d: -f1 | head -n1)
+
             echo "[!] - Configurando IP estática con NetworkManager"
-            nmcli connection modify "$interfaz" \
+            nmcli connection modify "$conexion" \
                 ipv4.addresses "$IP/$prefijo" \
                 ipv4.gateway "$gateway" \
                 ipv4.dns "8.8.8.8,1.1.1.1" \
                 ipv4.method manual
-            nmcli connection up "$interfaz"
+            nmcli connection up "$conexion"
             ;;
         systemd-networkd)
             echo "[!] - Configurando IP con systemd-networkd"
