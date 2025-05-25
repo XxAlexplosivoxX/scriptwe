@@ -70,6 +70,7 @@ instalarDependencias() {
         arrDependencias=("wget" "hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "git" "mysql-server")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
         echo -e "${cyan}[!] - actualizando repositorios...${reset}"
+        export DEBIAN_FRONTEND=noninteractive
         if ! dpkg -s mysql-apt-config &>/dev/null; then
             echo -e "${cyan}[!] - añadiendo configuración para mysql...${reset}"
             wget https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb
