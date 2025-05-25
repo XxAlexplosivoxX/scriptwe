@@ -263,10 +263,10 @@ configurarMariaDB() {
     done
     echo -e "${verde}[+] - Creando base de datos y usuario para FrontAccounting...${reset}"
     mysql --protocol=socket <<EOF
-CREATE DATABASE $dbMysql DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER '$usuarioMysql'@'localhost' IDENTIFIED BY '$passwdMysql';
+CREATE DATABASE IF NOT EXISTS $dbMysql DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '$usuarioMysql'@'localhost' IDENTIFIED BY '$passwdMysql';
 GRANT ALL PRIVILEGES ON $dbMysql.* TO '$usuarioMysql'@'localhost';
-EXIT;
+FLUSH PRIVILEGES;
 EOF
 }
 
