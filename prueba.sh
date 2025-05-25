@@ -250,8 +250,6 @@ instalarFrontAccounting() {
 }
 
 configurarMariaDB() {
-    echo -e "${verde}[+] - Protegiendo MariaDB con mysql_secure_installation...${reset}"
-    mysql_secure_installation
     echo -e "${cyan}[1] - políticas para contraseñas:${reset}"
     mysql --protocol=socket -e "SHOW VARIABLES LIKE 'validate_password%';"
     while true; do
