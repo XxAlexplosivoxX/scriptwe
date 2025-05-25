@@ -58,10 +58,20 @@ instalarDependencias() {
     local comandoInstalar=""
 
     case "$distro" in
-    debian|ubuntu)
+    ubuntu)
         arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "mysql-server" "git")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
         echo -e "${cyan}[!] - actualizando paquetes...${reset}"
+        apt update &>/dev/null
+        comandoInstalar="apt install -y"
+        comandoComprobar="dpkg -s"
+        ;;
+    debian)
+        arrDependencias=("wget" "hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "git")
+        echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
+        echo -e "${cyan}[!] - actualizando paquetes...${reset}"
+        wget https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb
+        sudo dpkg -i ./mysql-apt-config_0.8.30-1_all.deb
         apt update &>/dev/null
         comandoInstalar="apt install -y"
         comandoComprobar="dpkg -s"
