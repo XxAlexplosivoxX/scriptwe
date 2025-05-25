@@ -61,7 +61,7 @@ instalarDependencias() {
     ubuntu)
         arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "mysql-server" "git")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
-        echo -e "${cyan}[!] - actualizando paquetes...${reset}"
+        echo -e "${cyan}[!] - actualizando repositorios...${reset}"
         apt update &>/dev/null
         comandoInstalar="apt install -y"
         comandoComprobar="dpkg -s"
@@ -69,9 +69,12 @@ instalarDependencias() {
     debian)
         arrDependencias=("wget" "hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "git" "mysql-server")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
-        echo -e "${cyan}[!] - actualizando paquetes...${reset}"
-        wget https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb
-        sudo dpkg -i ./mysql-apt-config_0.8.30-1_all.deb
+        echo -e "${cyan}[!] - actualizando repositorios...${reset}"
+        if ! dpkg -s mysql-apt-config; then
+            echo -e "${cyan}[!] - añadiendo configuración para mysql...${reset}"
+            wget https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb
+            sudo dpkg -i ./mysql-apt-config_0.8.30-1_all.deb
+        fi
         apt update &>/dev/null
         comandoInstalar="apt install -y"
         comandoComprobar="dpkg -s"
