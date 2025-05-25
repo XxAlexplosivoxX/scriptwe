@@ -564,7 +564,15 @@ if ! instalarDependencias "$distro"; then
 fi
 clear
 
-configurarMariaDB
+echo -e "${cyan}[!] quieres configurar un usuario con una base de datos ya (s/n)?${reset}"
+read respuesta
+if [[ "$respuesta" =~ ^[sS]$ ]]; then
+    configurarMariaDB
+elif [[ "$respuesta" =~ ^[nN]$ ]]; then
+    echo "${amarillo}[!] - tonce no${reset}"
+else
+    echo "${amarillo}[!] - lo tomaré como un no${reset}"
+fi
 instalarFrontAccounting "$distro"
 
 echo "
