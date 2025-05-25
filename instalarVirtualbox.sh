@@ -15,7 +15,6 @@ instalarDependencias() {
     done
 }
 
-
 derivadosUbuntu() {
     if [[ -r /etc/os-release ]]; then
         source /etc/os-release
@@ -74,7 +73,7 @@ else
     echo "[✓] - $paquete ya está instalado"
 fi
 
-usuario_real=$(logname 2>/dev/null || echo "$SUDO_USER")
+usuario_real=$(logname)
 
 # Añadir usuario al grupo vboxusers
 echo "Configurando grupo vboxusers..."
