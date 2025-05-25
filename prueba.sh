@@ -61,6 +61,7 @@ instalarDependencias() {
     debian|ubuntu)
         arrDependencias=("hping3" "lolcat" "aircrack-ng" "nmap" "apache2" "php" "php-common" "php-fpm" "php-mysql" "php-gd" "php-curl" "php-xml" "php-mbstring" "libapache2-mod-php" "mysql-server" "git")
         echo -e "${verde}[!] - Instalando paquetes para ${distro}${reset}"
+        echo -e "${cyan}[!] - actualizando paquetes...${reset}"
         apt update &>/dev/null
         comandoInstalar="apt install -y"
         comandoComprobar="dpkg -l"
